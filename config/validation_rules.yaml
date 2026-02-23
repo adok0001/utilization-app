@@ -1,0 +1,46 @@
+# ============================================================
+# validation_rules.yaml — Configurable validation thresholds
+# ============================================================
+
+default:
+  validation:
+    max_shift_hours: 24        # Shifts longer than this are flagged
+    min_hourly_rate: 50        # USD/hr — below this triggers warning
+    max_hourly_rate: 2000      # USD/hr — above this triggers warning
+    min_payment_amount: 0      # Negative payments are errors
+    time_mismatch_tolerance: 0.1  # Hours — allowed difference between
+                                   # reported and calculated hours
+
+    # Allowed payment types (case-insensitive match)
+    allowed_payment_types:
+      - hourly
+      - stipend
+      - bonus
+      - incentive
+      - salary
+      - call_pay
+      - other
+
+    # Allowed shift types
+    allowed_shift_types:
+      - day
+      - evening
+      - night
+      - weekend
+      - holiday
+      - on_call
+
+    # Required columns (after name normalisation)
+    required_columns:
+      - physician_id
+      - physician_name
+      - service_date
+      - start_time
+      - end_time
+      - hours_worked
+      - payment_amount
+      - payment_type
+
+    # Date range sanity check
+    min_date: "2000-01-01"
+    max_date_offset_days: 7    # Reject dates more than 7 days in the future

@@ -1,0 +1,11 @@
+physician_id,physician_name,service_date,start_time,end_time,hours_worked,payment_amount,payment_type,department,specialty
+P001,alice johnson,2026-02-03,07:00,15:00,8,960,hourly,Emergency Medicine,Emergency Medicine
+P001,Dr. Alice Johnson,2026-02-04,07:00:00,15:00:00,8,960.00,hourly,Emergency Medicine,Emergency Medicine
+P002,Dr. Brian Martinez,2026-02-03,08:00:00,17:00:00,9,1035.00,hourly,Internal Medicine,Internal Medicine
+P002,Dr. Brian Martinez,2026-02-04,08:00:00,17:00:00,9,1035.00,hourly,Internal Medicine,Internal Medicine
+P006,Dr. Frank Okafor,2026-02-03,09:00:00,17:00:00,8,920.00,hourly,Cardiology,Cardiology
+P006,Dr. Frank Okafor,2026-02-04,09:00:00,17:00:00,8,920.00,hourly,Cardiology,Cardiology
+P006,Dr. Frank Okafor,2026-02-05,09:00:00,17:00:00,8,920.00,hourly,Cardiology,Cardiology
+P007,Dr. Grace Liu,2026-02-03,07:00:00,19:00:00,12,1500.00,hourly,Surgery,General Surgery
+P007,Dr. Grace Liu,2026-02-04,30:00:00,07:00:00,25,-200.00,hourly,Surgery,General Surgery
+P007,Dr. Grace Liu,2026-02-06,07:00:00,19:00:00,12,1500.00,hourly,Surgery,General Surgery

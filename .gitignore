@@ -1,0 +1,21 @@
+# R / renv
+renv/library/
+renv/staging/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj.user
+
+# Database (local only — not committed)
+data/*.sqlite
+data/*.db
+logs/
+reports/output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / config overrides
+.Renviron
+config/local.yaml

@@ -1,0 +1,95 @@
+---
+title: "Department Utilization Summary"
+subtitle: "`r params$year`"
+date: "`r Sys.Date()`"
+format:
+  html:
+    theme: flatly
+    toc: true
+    embed-resources: true
+params:
+  year: 2026
+  department: "All"
+  db_path: "data/physician_utilization.sqlite"
+---
+
+```{r setup, include=FALSE}
+library(DBI); library(RSQLite); library(data.table)
+library(ggplot2); library(knitr); library(kableExtra)
+
+source("R/utils/constants.R")
+source("R/utils/formatting.R")
+source("R/utils/logging.R")
+source("R/data/calculate_metrics.R")
+source("R/database/init_db.R")
+source("R/database/queries.R")
+
+con <- dbConnect(RSQLite::SQLite(), params$db_path)
+dept_monthly <- get_department_summary(con, year = params$year)
+if (params$department != "All" && "department" %in% names(dept_monthly))
+  dept_monthly <- dept_monthly[department == params$department]
+```
+
+## Department Overview — `r params$year`
+
+```{r dept-kpis, echo=FALSE}
+kpis <- dept_monthly[, .(
+  `Total Hours`           = sum(total_hours,          na.rm = TRUE),
+  `Total Compensation`    = sum(total_compensation,   na.rm = TRUE),
+  `Total FTE`             = sum(total_fte,            na.rm = TRUE),
+  `Physician Count`       = sum(physician_count,      na.rm = TRUE)
+)]
+kpi_fmt <- data.frame(
+  Metric = names(kpis),
+  Value  = c(
+    fmt_hours(kpis[[1]]),
+    fmt_currency(kpis[[2]]),
+    fmt_fte(kpis[[3]]),
+    fmt_number(kpis[[4]], 0)
+  )
+)
+kable(kpi_fmt, col.names = c("Metric","Value")) |>
+  kable_styling(bootstrap_options = "condensed", full_width = FALSE)
+```
+
+## Monthly Hours Trend
+
+```{r monthly-hours, echo=FALSE, fig.height=4}
+ggplot(dept_monthly, aes(x = month, y = total_hours, color = department, group = department)) +
+  geom_line(size = 1) + geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  labs(x = NULL, y = "Hours", color = "Department",
+       title = paste("Monthly Hours by Department —", params$year)) +
+  theme_minimal(base_size = 12)
+```
+
+## Monthly Compensation Trend
+
+```{r monthly-comp, echo=FALSE, fig.height=4}
+ggplot(dept_monthly, aes(x = month, y = total_compensation, fill = department)) +
+  geom_col(position = "stack") +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  scale_y_continuous(labels = scales::dollar) +
+  labs(x = NULL, y = "Compensation ($)", fill = "Department",
+       title = paste("Monthly Compensation by Department —", params$year)) +
+  theme_minimal(base_size = 12)
+```
+
+## Department Summary Table
+
+```{r dept-table, echo=FALSE}
+annual <- dept_monthly[, .(
+  `Total Hours`        = sum(total_hours,        na.rm = TRUE),
+  `Total Compensation` = scales::dollar(sum(total_compensation, na.rm = TRUE)),
+  `Total FTE`          = round(sum(total_fte,    na.rm = TRUE), 2),
+  `Physicians`         = sum(physician_count,    na.rm = TRUE),
+  `Avg Rate ($/hr)`    = scales::dollar(mean(avg_hourly_rate, na.rm = TRUE))
+), by = department]
+
+kable(annual) |>
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+```
+
+```{r cleanup, include=FALSE}
+dbDisconnect(con)
+```

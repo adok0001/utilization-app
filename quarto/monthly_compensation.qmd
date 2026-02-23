@@ -1,0 +1,108 @@
+---
+title: "Monthly Physician Compensation Report"
+subtitle: "`r params$year`–`r sprintf('%02d', params$month)`"
+date: "`r Sys.Date()`"
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-location: left
+    embed-resources: true
+  pdf:
+    toc: true
+params:
+  year: 2026
+  month: 1
+  department: "All"
+  db_path: "data/physician_utilization.sqlite"
+---
+
+```{r setup, include=FALSE}
+library(DBI)
+library(RSQLite)
+library(data.table)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+
+source("R/utils/constants.R")
+source("R/utils/formatting.R")
+source("R/utils/logging.R")
+source("R/data/calculate_metrics.R")
+source("R/database/init_db.R")
+source("R/database/queries.R")
+
+con <- dbConnect(RSQLite::SQLite(), params$db_path)
+```
+
+```{r data, include=FALSE}
+monthly <- get_monthly_summary(con, year = params$year)
+monthly <- monthly[month == params$month]
+
+if (params$department != "All" && "department" %in% names(monthly)) {
+  monthly <- monthly[department == params$department]
+}
+
+monthly <- add_peer_comparison(monthly)
+```
+
+## Summary
+
+**Period:** `r format(as.Date(paste(params$year, params$month, "01", sep="-")), "%B %Y")`  
+**Department:** `r params$department`  
+**Physicians Reported:** `r nrow(monthly)`  
+**Total Hours:** `r fmt_hours(sum(monthly$total_hours, na.rm=TRUE))`  
+**Total Compensation:** `r fmt_currency(sum(monthly$total_compensation, na.rm=TRUE))`
+
+---
+
+## Physician Summary Table
+
+```{r summary-table, echo=FALSE}
+display <- monthly[, .(
+  Physician     = physician_name,
+  Department    = if("department" %in% names(monthly)) department else "N/A",
+  Hours         = round(total_hours, 1),
+  `FTE %`       = scales::percent(fte_pct, accuracy = 0.1),
+  Compensation  = scales::dollar(total_compensation),
+  `Hourly Rate` = scales::dollar(avg_hourly_rate),
+  `vs Peers`    = scales::percent(vs_peer_hours_pct, accuracy = 0.1)
+)]
+
+kable(display, align = "lllrrrrr") |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed"), full_width = FALSE)
+```
+
+## Hours Distribution
+
+```{r hours-chart, echo=FALSE, fig.height=5}
+ggplot(monthly[order(-total_hours)][1:min(20,.N)],
+       aes(x = reorder(physician_name, total_hours), y = total_hours,
+           fill = total_hours)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_gradient(low = "#b2cfe8", high = "#1e6091") +
+  labs(x = NULL, y = "Hours Worked", fill = "Hours",
+       title = paste("Hours Worked —", format(as.Date(paste(params$year, params$month, "01", sep="-")), "%B %Y"))) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+```
+
+## Compensation vs. Peers
+
+```{r peer-chart, echo=FALSE, fig.height=5}
+ggplot(monthly, aes(x = total_hours, y = total_compensation,
+                     label = physician_name)) +
+  geom_point(aes(color = vs_peer_hours_pct), size = 3) +
+  geom_text(nudge_y = 500, size = 3, check_overlap = TRUE) +
+  scale_color_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60",
+                        midpoint = 0, labels = scales::percent) +
+  labs(x = "Hours Worked", y = "Total Compensation ($)",
+       color = "vs Peer Avg",
+       title = "Compensation vs. Hours — Peer Comparison") +
+  theme_minimal(base_size = 12)
+```
+
+```{r cleanup, include=FALSE}
+dbDisconnect(con)
+```

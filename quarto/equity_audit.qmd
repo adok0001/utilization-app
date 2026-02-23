@@ -1,0 +1,119 @@
+---
+title: "Compensation Equity Audit"
+subtitle: "Year `r params$year`"
+date: "`r Sys.Date()`"
+format:
+  html:
+    theme: flatly
+    toc: true
+    embed-resources: true
+params:
+  year: 2026
+  db_path: "data/physician_utilization.sqlite"
+---
+
+```{r setup, include=FALSE}
+library(DBI); library(RSQLite); library(data.table)
+library(ggplot2); library(knitr); library(kableExtra)
+
+source("R/utils/constants.R"); source("R/utils/formatting.R")
+source("R/utils/logging.R");   source("R/data/calculate_metrics.R")
+source("R/database/init_db.R"); source("R/database/queries.R")
+
+con     <- dbConnect(RSQLite::SQLite(), params$db_path)
+monthly <- get_monthly_summary(con, year = params$year)
+annual  <- build_annual_summary(monthly)
+monthly <- add_peer_comparison(monthly)
+```
+
+## Purpose
+
+This report identifies potential compensation equity issues by comparing physicians
+with similar workloads within the same department. It does **not** make conclusions —
+it flags patterns that benefit from human review.
+
+> ⚠️ **Confidential.** This report contains compensation data. Restrict distribution
+> to authorized personnel.
+
+---
+
+## Methodology
+
+1. Group physicians by department and annual FTE tier (< 0.5, 0.5–0.9, ≥ 1.0)
+2. Within each group, compare average hourly rates
+3. Flag physicians where rate deviates >20% from the group median
+4. Present without adjustment for specialty, tenure, or certification (manual review should consider these)
+
+---
+
+## Rate Distribution by Department
+
+```{r rate-dist, echo=FALSE, fig.height=5}
+ggplot(annual[!is.na(avg_hourly_rate)],
+       aes(x = avg_hourly_rate, fill = department)) +
+  geom_histogram(bins = 20, alpha = 0.8) +
+  facet_wrap(~department, scales = "free_y") +
+  scale_x_continuous(labels = scales::dollar) +
+  labs(x = "Average Hourly Rate ($/hr)", y = "Count",
+       title = paste("Rate Distribution by Department —", params$year)) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "none")
+```
+
+## Hours vs. Compensation Scatter
+
+```{r scatter, echo=FALSE, fig.height=5}
+ggplot(annual[!is.na(total_hours) & !is.na(total_compensation)],
+       aes(x = total_hours, y = total_compensation,
+           color = if("department" %in% names(annual)) department else "All")) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  scale_y_continuous(labels = scales::dollar) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.8, linetype = "dashed") +
+  labs(x = "Total Hours", y = "Total Compensation ($)", color = "Department",
+       title = "Hours vs. Compensation — All Physicians") +
+  theme_minimal(base_size = 12)
+```
+
+## Potential Equity Flags
+
+```{r flags, echo=FALSE}
+# Within department: flag if rate deviates >20% from median
+if ("department" %in% names(annual)) {
+  annual[, dept_median_rate := median(avg_hourly_rate, na.rm = TRUE), by = department]
+  annual[, rate_vs_median := (avg_hourly_rate - dept_median_rate) / dept_median_rate]
+  flags <- annual[abs(rate_vs_median) > 0.20 & !is.na(rate_vs_median)]
+} else {
+  annual[, overall_median := median(avg_hourly_rate, na.rm = TRUE)]
+  annual[, rate_vs_median := (avg_hourly_rate - overall_median) / overall_median]
+  flags <- annual[abs(rate_vs_median) > 0.20 & !is.na(rate_vs_median)]
+}
+
+if (nrow(flags) > 0) {
+  flags[, `:=`(
+    Direction = fifelse(rate_vs_median > 0, "Above median", "Below median")
+  )]
+  display <- flags[, .(
+    Physician    = physician_name,
+    Department   = if("department" %in% names(flags)) department else "N/A",
+    `Hourly Rate` = scales::dollar(avg_hourly_rate),
+    `Dept Median` = scales::dollar(dept_median_rate),
+    `Deviation`  = scales::percent(rate_vs_median, accuracy = 0.1),
+    Direction
+  )]
+  kable(display[order(department, rate_vs_median)]) |>
+    kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) |>
+    row_spec(which(display$rate_vs_median < -0.20), background = "#fce4e4") |>
+    row_spec(which(display$rate_vs_median >  0.20), background = "#fef9e7")
+} else {
+  cat("No physicians flagged (within ±20% of department median rate).")
+}
+```
+
+---
+
+*Generated automatically on `r Sys.Date()`. Please review flagged physicians with
+HR and physician leadership before taking any action.*
+
+```{r cleanup, include=FALSE}
+dbDisconnect(con)
+```

@@ -1,0 +1,11 @@
+physician_id,physician_name,department,specialty,first_seen,is_active
+P001,Dr. Alice Johnson,Emergency Medicine,Emergency Medicine,2024-01-01,1
+P002,Dr. Brian Martinez,Internal Medicine,Internal Medicine,2024-01-01,1
+P003,Dr. Carol Chen,Surgery,General Surgery,2024-01-01,1
+P004,Dr. David Kim,Pediatrics,Pediatrics,2024-01-01,1
+P005,Dr. Eva Nguyen,Radiology,Diagnostic Radiology,2024-01-01,1
+P006,Dr. Frank Okafor,Cardiology,Cardiology,2024-03-15,1
+P007,Dr. Grace Liu,Surgery,General Surgery,2024-06-01,1
+P008,Dr. Henry Park,Anesthesiology,Anesthesiology,2024-01-01,1
+P009,Dr. Isabel Reyes,Psychiatry,Psychiatry,2024-09-01,1
+P010,Dr. James Thompson,Emergency Medicine,Emergency Medicine,2023-07-01,1

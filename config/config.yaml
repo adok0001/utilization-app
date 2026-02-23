@@ -1,0 +1,46 @@
+# ============================================================
+# config.yaml — Application configuration
+# ============================================================
+
+default:
+  app:
+    title: "Physician Utilization & Compensation"
+    version: "1.0.0"
+    debug: false
+    port: 3838
+
+  database:
+    type: "sqlite"             # "sqlite" | "postgres"
+    path: "data/physician_utilization.sqlite"
+    # For PostgreSQL (uncomment and fill in):
+    # host: "localhost"
+    # port: 5432
+    # dbname: "physician_utilization"
+    # user: "app_user"
+    # password: ""             # Use env var DB_PASSWORD in production
+
+  upload:
+    max_file_size_mb: 50
+    allowed_extensions: ["csv", "xlsx", "xls"]
+    preview_rows: 10
+
+  logging:
+    level: "INFO"             # DEBUG | INFO | WARN | ERROR
+    file: "logs/app.log"
+    max_size_mb: 10
+
+  reporting:
+    output_dir: "reports/output"
+    quarto_dir: "quarto"
+
+  access:
+    require_auth: false       # Set true with Posit Connect
+    default_role: "viewer"    # viewer | analyst | admin
+
+production:
+  app:
+    debug: false
+  logging:
+    level: "WARN"
+  access:
+    require_auth: true

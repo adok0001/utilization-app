@@ -1,0 +1,81 @@
+# ============================================================
+# constants.yaml — Business domain constants
+# ============================================================
+
+default:
+  fte:
+    annual_hours: 2080          # Standard FTE = 2080 hrs/year
+    monthly_hours: 173.33       # 2080 / 12
+
+  compensation:
+    currency: "USD"
+    currency_symbol: "$"
+
+  payment_types:
+    - id: hourly
+      label: "Hourly Pay"
+      color: "#1e6091"
+    - id: stipend
+      label: "Stipend"
+      color: "#2980b9"
+    - id: bonus
+      label: "Bonus"
+      color: "#27ae60"
+    - id: incentive
+      label: "Incentive Pay"
+      color: "#f39c12"
+    - id: salary
+      label: "Salary"
+      color: "#8e44ad"
+    - id: call_pay
+      label: "Call Pay"
+      color: "#c0392b"
+    - id: other
+      label: "Other"
+      color: "#95a5a6"
+
+  shift_types:
+    - id: day
+      label: "Day"
+      hours: "07:00–15:00"
+    - id: evening
+      label: "Evening"
+      hours: "15:00–23:00"
+    - id: night
+      label: "Night"
+      hours: "23:00–07:00"
+    - id: weekend
+      label: "Weekend"
+    - id: holiday
+      label: "Holiday"
+    - id: on_call
+      label: "On Call"
+
+  departments:
+    - "Emergency Medicine"
+    - "Internal Medicine"
+    - "Surgery"
+    - "Pediatrics"
+    - "Obstetrics & Gynecology"
+    - "Radiology"
+    - "Anesthesiology"
+    - "Cardiology"
+    - "Neurology"
+    - "Orthopedics"
+    - "Psychiatry"
+    - "Other"
+
+  specialties:
+    - "Emergency Medicine"
+    - "Internal Medicine"
+    - "General Surgery"
+    - "Pediatrics"
+    - "OB/GYN"
+    - "Diagnostic Radiology"
+    - "Anesthesiology"
+    - "Cardiology"
+    - "Neurology"
+    - "Orthopedic Surgery"
+    - "Psychiatry"
+    - "Family Medicine"
+    - "Hospitalist"

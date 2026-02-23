@@ -1,0 +1,145 @@
+/* ============================================================
+   custom.css — Physician Utilization App custom styles
+   ============================================================ */
+
+/* ── Typography & layout ────────────────────────────────────── */
+body {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  background-color: #f4f6f9;
+  color: #2c3e50;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+}
+
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1e6091;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid #d0e6f5;
+  padding-bottom: 0.5rem;
+}
+
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.card {
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.25rem;
+  border: none;
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e8ecf0;
+  font-weight: 600;
+  color: #34495e;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+/* ── KPI cards ───────────────────────────────────────────────── */
+.kpi-card {
+  text-align: center;
+  padding: 1.25rem;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7f8c8d;
+  margin-top: 0.25rem;
+}
+
+/* ── Alerts ──────────────────────────────────────────────────── */
+.alert {
+  border-radius: 8px;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.alert-warning {
+  border-left-color: #f39c12;
+  background-color: #fef9e7;
+}
+
+.alert-success {
+  border-left-color: #27ae60;
+  background-color: #eafaf1;
+}
+
+.alert-danger {
+  border-left-color: #e74c3c;
+  background-color: #fde8e8;
+}
+
+/* ── File upload drop zone ───────────────────────────────────── */
+.shiny-input-container > .input-group {
+  border: 2px dashed #b2cfe8;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #f8fbfe;
+  transition: border-color 0.2s;
+}
+
+.shiny-input-container > .input-group:hover {
+  border-color: #1e6091;
+}
+
+/* ── Validation severity badges ─────────────────────────────── */
+td.error-row {
+  background-color: #fce4e4 !important;
+}
+
+td.warning-row {
+  background-color: #fff3cd !important;
+}
+
+/* ── DT table enhancements ───────────────────────────────────── */
+table.dataTable thead th {
+  background-color: #eaf2fb;
+  color: #1e6091;
+  font-weight: 600;
+}
+
+table.dataTable tbody tr:hover {
+  background-color: #f0f7ff !important;
+}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.progress-bar {
+  background-color: #1e6091;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn-primary {
+  background-color: #1e6091;
+  border-color: #1e6091;
+}
+
+.btn-primary:hover {
+  background-color: #155074;
+  border-color: #155074;
+}
+
+/* ── Responsive tweaks ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.2rem;
+  }
+  .kpi-value {
+    font-size: 1.4rem;
+  }
+}

@@ -1,0 +1,88 @@
+---
+title: "Executive Compensation Review"
+subtitle: "Year `r params$year` — All Departments"
+date: "`r Sys.Date()`"
+format:
+  html:
+    theme: flatly
+    toc: true
+    embed-resources: true
+params:
+  year: 2026
+  db_path: "data/physician_utilization.sqlite"
+---
+
+```{r setup, include=FALSE}
+library(DBI); library(RSQLite); library(data.table)
+library(ggplot2); library(knitr); library(kableExtra)
+
+source("R/utils/constants.R"); source("R/utils/formatting.R")
+source("R/utils/logging.R");   source("R/data/calculate_metrics.R")
+source("R/database/init_db.R"); source("R/database/queries.R")
+
+con     <- dbConnect(RSQLite::SQLite(), params$db_path)
+monthly <- get_monthly_summary(con, year = params$year)
+annual  <- build_annual_summary(monthly)
+dept    <- get_department_summary(con, year = params$year)
+```
+
+## Executive Summary
+
+```{r exec-kpis, echo=FALSE}
+data.frame(
+  Metric = c("Total Physicians","Total Hours","Total Compensation","Avg FTE","Avg Hourly Rate"),
+  Value  = c(
+    fmt_number(uniqueN(annual$physician_id), 0),
+    fmt_hours(sum(annual$total_hours, na.rm=TRUE)),
+    fmt_currency(sum(annual$total_compensation, na.rm=TRUE)),
+    fmt_fte(mean(annual$fte_pct, na.rm=TRUE)),
+    fmt_currency(mean(annual$avg_hourly_rate, na.rm=TRUE))
+  )
+) |> kable() |> kable_styling(bootstrap_options="condensed", full_width=FALSE)
+```
+
+## Compensation by Department
+
+```{r dept-pie, echo=FALSE, fig.height=5}
+dept_ann <- dept[, .(total_comp=sum(total_compensation,na.rm=TRUE)), by=department]
+ggplot(dept_ann, aes(x="", y=total_comp, fill=department)) +
+  geom_col(width=1) + coord_polar("y") +
+  scale_y_continuous(labels=scales::dollar) +
+  labs(fill="Department", title=paste("Compensation by Department —",params$year)) +
+  theme_void(base_size=12)
+```
+
+## Top 10 Physicians by Compensation
+
+```{r top-10, echo=FALSE}
+top10 <- annual[order(-total_compensation)][1:min(10,.N),
+  .(Physician=physician_name, Department=department,
+    `Total Hours`=round(total_hours,1),
+    Compensation=scales::dollar(total_compensation),
+    `Hourly Rate`=scales::dollar(avg_hourly_rate),
+    `FTE %`=scales::percent(fte_pct,accuracy=0.1))]
+kable(top10) |> kable_styling(bootstrap_options=c("striped","hover"),full_width=FALSE)
+```
+
+## Compensation Outliers
+
+```{r outliers, echo=FALSE, fig.height=5}
+monthly_peer <- add_peer_comparison(monthly)
+outliers <- monthly_peer[abs(vs_peer_comp_pct) > 0.25 & !is.na(vs_peer_comp_pct)]
+if (nrow(outliers) > 0) {
+  ggplot(outliers, aes(x=reorder(physician_name,-vs_peer_comp_pct),
+                        y=vs_peer_comp_pct, fill=vs_peer_comp_pct>0)) +
+    geom_col() + coord_flip() +
+    scale_y_continuous(labels=scales::percent) +
+    scale_fill_manual(values=c("TRUE"="#27ae60","FALSE"="#e74c3c")) +
+    labs(x=NULL, y="% vs. Peer Average", fill="Above Average",
+         title="Physicians >25% from Department Peer Average") +
+    theme_minimal(base_size=12)
+} else {
+  cat("No significant outliers detected (threshold: ±25% from peer average).")
+}
+```
+
+```{r cleanup, include=FALSE}
+dbDisconnect(con)
+```
