@@ -22,9 +22,12 @@ persist_upload <- function(con, dt, upload_log_id = NULL) {
     log_db_write("physician_hours_raw", nrow(dt_insert))
 
     # 2. Upsert physician master records
-    unique_physicians <- unique(dt[, .(physician_id, physician_name,
-                                        department = if("department" %in% names(dt)) department else NA_character_,
-                                        specialty  = if("specialty"  %in% names(dt)) specialty  else NA_character_)])
+    unique_physicians <- unique(data.table(
+      physician_id   = dt[["physician_id"]],
+      physician_name = dt[["physician_name"]],
+      department     = if ("department" %in% names(dt)) dt[["department"]] else rep(NA_character_, nrow(dt)),
+      specialty      = if ("specialty"  %in% names(dt)) dt[["specialty"]]  else rep(NA_character_, nrow(dt))
+    ))
     for (i in seq_len(nrow(unique_physicians))) {
       p <- unique_physicians[i]
       upsert_physician(con, p$physician_id, p$physician_name, p$department, p$specialty)
@@ -42,19 +45,16 @@ persist_upload <- function(con, dt, upload_log_id = NULL) {
       if (nrow(all_raw_month) > 0) {
         # Rebuild summary for all physicians in this month
         new_summary <- build_monthly_summary(all_raw_month)
-
-        # Delete old rows for this month and re-insert
         db_execute(con,
           "DELETE FROM physician_monthly_summary WHERE year = ? AND month = ?",
           list(yr, mo)
         )
-        dbWriteTable(con, "physician_monthly_summary", new_summary,
+        dbWriteTable(con, "physician_monthly_summary", as.data.frame(new_summary),
                      append = TRUE, row.names = FALSE)
         log_db_write("physician_monthly_summary", nrow(new_summary))
       }
     }
 
-    # 4. Rebuild annual summary for affected years
     affected_years <- unique(dt$year)
     for (yr in affected_years) {
       monthly_yr <- get_monthly_summary(con, year = yr)
@@ -62,7 +62,7 @@ persist_upload <- function(con, dt, upload_log_id = NULL) {
         annual_summary <- build_annual_summary(monthly_yr)
         db_execute(con,
           "DELETE FROM physician_annual_summary WHERE year = ?", list(yr))
-        dbWriteTable(con, "physician_annual_summary", annual_summary,
+        dbWriteTable(con, "physician_annual_summary", as.data.frame(annual_summary),
                      append = TRUE, row.names = FALSE)
         log_db_write("physician_annual_summary", nrow(annual_summary))
       }

@@ -4,9 +4,9 @@
 library(testthat)
 library(data.table)
 
-source("R/utils/constants.R")
-source("R/utils/logging.R")
-source("R/data/calculate_metrics.R")
+source("../R/utils/constants.R")
+source("../R/utils/logging.R")
+source("../R/data/calculate_metrics.R")
 
 # ── Helper: build a minimal raw data.table ───────────────────
 make_raw_dt <- function() {

@@ -5,9 +5,9 @@ library(testthat)
 library(data.table)
 
 # Source dependencies
-source("R/utils/constants.R")
-source("R/utils/logging.R")
-source("R/utils/validation_rules.R")
+source("../R/utils/constants.R")
+source("../R/utils/logging.R")
+source("../R/utils/validation_rules.R")
 
 # ── check_required_columns ───────────────────────────────────
 test_that("check_required_columns passes with all required cols", {

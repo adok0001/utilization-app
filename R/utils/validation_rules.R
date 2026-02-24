@@ -5,15 +5,26 @@
 
 #' Load validation thresholds from YAML (with hard-coded defaults)
 get_validation_config <- function() {
-  tryCatch(
-    config::get("validation"),
-    error = function(e) list(
-      max_shift_hours    = MAX_SHIFT_HOURS,
-      min_hourly_rate    = MIN_HOURLY_RATE,
-      max_hourly_rate    = MAX_HOURLY_RATE,
-      min_payment_amount = MIN_PAYMENT_AMOUNT
-    )
+  defaults <- list(
+    max_shift_hours    = MAX_SHIFT_HOURS,
+    min_hourly_rate    = MIN_HOURLY_RATE,
+    max_hourly_rate    = MAX_HOURLY_RATE,
+    min_payment_amount = MIN_PAYMENT_AMOUNT
   )
+  # Try validation_rules.yaml first; fall back to defaults on any error
+  vc <- tryCatch({
+    yaml_path <- if (file.exists("config/validation_rules.yaml")) {
+      "config/validation_rules.yaml"
+    } else if (file.exists("../config/validation_rules.yaml")) {
+      "../config/validation_rules.yaml"
+    } else {
+      return(defaults)
+    }
+    raw <- yaml::read_yaml(yaml_path)
+    vals <- raw[["default"]][["validation"]]
+    if (is.null(vals)) defaults else modifyList(defaults, vals)
+  }, error = function(e) defaults)
+  vc
 }
 
 #' Check that all required columns are present (case-insensitive)
@@ -93,7 +104,7 @@ check_outliers <- function(dt) {
     bad <- dt_copy[as.numeric(hours_worked) > vc$max_shift_hours, row_num]
     if (length(bad))
       issues <- c(issues, list(data.table(row = bad, column = "hours_worked",
-                                          issue = glue::glue("Shift > {vc$max_shift_hours} hours"))))
+                                          issue = as.character(glue::glue("Shift > {vc$max_shift_hours} hours")))))
   }
   if ("payment_amount" %in% names(dt)) {
     neg <- dt_copy[as.numeric(payment_amount) < vc$min_payment_amount, row_num]
@@ -107,10 +118,10 @@ check_outliers <- function(dt) {
     hi_rate  <- dt_copy[!is.na(rate) & rate > vc$max_hourly_rate, row_num]
     if (length(low_rate))
       issues <- c(issues, list(data.table(row = low_rate, column = "payment_amount",
-                                          issue = glue::glue("Hourly rate below ${vc$min_hourly_rate}"))))
+                                          issue = as.character(glue::glue("Hourly rate below ${vc$min_hourly_rate}")))))
     if (length(hi_rate))
       issues <- c(issues, list(data.table(row = hi_rate, column = "payment_amount",
-                                          issue = glue::glue("Hourly rate above ${vc$max_hourly_rate}"))))
+                                          issue = as.character(glue::glue("Hourly rate above ${vc$max_hourly_rate}")))))
   }
   if (length(issues)) rbindlist(issues) else data.table()
 }

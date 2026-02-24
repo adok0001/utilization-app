@@ -8,19 +8,27 @@ library(data.table)
 # ── Generic helpers ───────────────────────────────────────────
 
 #' Execute a parameterised query and return a data.table
-#' @param con  DBI connection
-#' @param sql  SQL string (may contain ? placeholders)
-#' @param ...  Values for placeholders (passed to dbGetQuery)
-db_query <- function(con, sql, ...) {
-  as.data.table(dbGetQuery(con, sql, ...))
+#' @param con     DBI connection
+#' @param sql     SQL string (may contain ? placeholders)
+#' @param params  Named or unnamed list of bind values (omit or pass list() for none)
+db_query <- function(con, sql, params = list()) {
+  if (length(params) == 0) {
+    as.data.table(dbGetQuery(con, sql))
+  } else {
+    as.data.table(dbGetQuery(con, sql, params = params))
+  }
 }
 
 #' Execute a DML statement (INSERT/UPDATE/DELETE)
-#' @param con  DBI connection
-#' @param sql  SQL string
-#' @param ...  Bind values
-db_execute <- function(con, sql, ...) {
-  dbExecute(con, sql, ...)
+#' @param con     DBI connection
+#' @param sql     SQL string (may contain ? placeholders)
+#' @param params  Named or unnamed list of bind values (omit or pass list() for none)
+db_execute <- function(con, sql, params = list()) {
+  if (length(params) == 0) {
+    dbExecute(con, sql)
+  } else {
+    dbExecute(con, sql, params = params)
+  }
 }
 
 # ── Upload log ────────────────────────────────────────────────

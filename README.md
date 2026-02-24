@@ -36,8 +36,11 @@ cd utilization-app
 # 2. Restore R packages
 Rscript -e "renv::restore()"
 
-# 3. Launch the app
-Rscript -e "shiny::runApp('R/app.R')"
+# 3. Seed the database with sample data (optional)
+Rscript seed_db.R
+
+# 4. Launch the app
+Rscript -e "shiny::runApp('app.R')"
 ```
 
 The app will open at [http://127.0.0.1:3838](http://127.0.0.1:3838).
@@ -48,8 +51,11 @@ The app will open at [http://127.0.0.1:3838](http://127.0.0.1:3838).
 
 ```
 utilization-app/
+├── app.R                              # Shiny app entry point (root)
+├── seed_db.R                          # Load sample data into DB
+├── run_tests.R                        # Run test suite
+├── config.yml                         # App & DB settings
 ├── R/
-│   ├── app.R                          # Shiny app entry point
 │   ├── modules/
 │   │   ├── upload_module.R            # File upload & validation workflow
 │   │   ├── dashboard_module.R         # Main KPI dashboard
@@ -97,7 +103,6 @@ utilization-app/
 │   ├── test_import.R
 │   └── test_database.R
 ├── config/
-│   ├── config.yaml                    # App & DB settings
 │   ├── validation_rules.yaml          # Configurable thresholds
 │   └── constants.yaml                 # Payment/shift types, departments
 ├── docker/
@@ -158,7 +163,7 @@ docker run -p 3838:3838 \
 
 ## Configuration
 
-Edit [`config/config.yaml`](config/config.yaml) to change database path, logging level, file size limits, and authentication settings.
+Edit [`config.yml`](config.yml) to change database path, logging level, file size limits, and authentication settings.
 
 Validation thresholds (max shift hours, hourly rate bounds, etc.) are in [`config/validation_rules.yaml`](config/validation_rules.yaml).
 

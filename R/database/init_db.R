@@ -17,15 +17,18 @@ init_db <- function(db_path = "data/physician_utilization.sqlite") {
   dbExecute(con, "PRAGMA journal_mode=WAL;")
   dbExecute(con, "PRAGMA foreign_keys=ON;")
 
+  # Locate sql/ directory — works whether CWD is project root or tests/
+  sql_dir <- if (file.exists("sql/schema.sql")) "sql" else "../sql"
+
   # Read and execute schema SQL
-  schema_sql <- readSQLFile("sql/schema.sql")
+  schema_sql <- readSQLFile(file.path(sql_dir, "schema.sql"))
   statements <- split_sql(schema_sql)
   for (stmt in statements) {
     if (nzchar(trimws(stmt))) dbExecute(con, stmt)
   }
 
   # Read and apply indexes
-  index_sql <- readSQLFile("sql/indexes.sql")
+  index_sql <- readSQLFile(file.path(sql_dir, "indexes.sql"))
   idx_stmts <- split_sql(index_sql)
   for (stmt in idx_stmts) {
     if (nzchar(trimws(stmt))) {

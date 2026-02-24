@@ -18,7 +18,6 @@ library(readxl)
 library(writexl)
 library(glue)
 library(logger)
-library(config)
 
 # ── Source all project files ────────────────────────────────
 source("R/utils/constants.R")

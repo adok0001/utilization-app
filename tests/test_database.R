@@ -7,12 +7,12 @@ library(RSQLite)
 library(data.table)
 library(withr)
 
-source("R/utils/constants.R")
-source("R/utils/logging.R")
-source("R/data/calculate_metrics.R")
-source("R/database/init_db.R")
-source("R/database/queries.R")
-source("R/database/persistence.R")
+source("../R/utils/constants.R")
+source("../R/utils/logging.R")
+source("../R/data/calculate_metrics.R")
+source("../R/database/init_db.R")
+source("../R/database/queries.R")
+source("../R/database/persistence.R")
 
 # ── Shared test database ─────────────────────────────────────
 make_test_db <- function() {

@@ -10,11 +10,13 @@ library(data.table)
 #' @return   data.table  with columns: physician_id, year, month,
 #'                       total_hours, days_worked, shift_count
 summarise_hours_monthly <- function(dt) {
-  dt[, .(
-    total_hours  = sum(hours_worked, na.rm = TRUE),
-    days_worked  = uniqueN(service_date),
-    shift_count  = .N
-  ), by = .(physician_id, physician_name, year, month)]
+  hrs <- dt[, .(
+    physician_name = physician_name[1L],
+    total_hours    = sum(hours_worked, na.rm = TRUE),
+    days_worked    = uniqueN(service_date),
+    shift_count    = .N
+  ), by = .(physician_id, year, month)]
+  hrs
 }
 
 #' Calculate FTE % for each physician-month
@@ -36,7 +38,7 @@ summarise_compensation_monthly <- function(dt) {
     bonus_total        = sum(payment_amount[payment_type == "bonus"],    na.rm = TRUE),
     incentive_total    = sum(payment_amount[payment_type == "incentive"],na.rm = TRUE),
     n_payment_records  = .N
-  ), by = .(physician_id, physician_name, year, month)]
+  ), by = .(physician_id, year, month)]
 }
 
 #' Calculate average hourly rate (compensation / hours)
@@ -60,7 +62,7 @@ build_monthly_summary <- function(dt) {
   comp <- summarise_compensation_monthly(dt)
 
   merged <- merge(hrs, comp,
-                  by = c("physician_id", "physician_name", "year", "month"),
+                  by = c("physician_id", "year", "month"),
                   all = TRUE)
 
   merged <- calc_fte(merged)
@@ -77,9 +79,14 @@ build_monthly_summary <- function(dt) {
     for (col in c("day", "evening", "night", "weekend", "holiday", "on_call")) {
       if (!col %in% names(shift_wide)) shift_wide[, (col) := 0]
     }
-    setnames(shift_wide,
-             c("day","evening","night","weekend","holiday","on_call"),
-             paste0("hours_", c("day","evening","night","weekend","holiday","on_call")))
+    # Remove any NA-named column produced by dcast (rows with NA shift_type)
+    # Must catch both R's NA and the string "NA" that dcast produces
+    na_cols <- names(shift_wide)[is.na(names(shift_wide)) | names(shift_wide) == "NA"]
+    if (length(na_cols)) shift_wide[, (na_cols) := NULL]
+
+    shift_cols <- c("day", "evening", "night", "weekend", "holiday", "on_call")
+    existing   <- base::intersect(shift_cols, names(shift_wide))
+    setnames(shift_wide, existing, paste0("hours_", existing))
     merged <- merge(merged, shift_wide, by = c("physician_id","year","month"), all.x = TRUE)
   }
 
@@ -92,13 +99,14 @@ build_monthly_summary <- function(dt) {
 #' @param monthly_dt  Output of build_monthly_summary()
 build_annual_summary <- function(monthly_dt) {
   monthly_dt[, .(
+    physician_name     = physician_name[1L],
     total_hours        = sum(total_hours,        na.rm = TRUE),
     total_compensation = sum(total_compensation, na.rm = TRUE),
     days_worked        = sum(days_worked,         na.rm = TRUE),
     shift_count        = sum(shift_count,         na.rm = TRUE),
     months_active      = uniqueN(month)
-  ), by = .(physician_id, physician_name, year)] |>
-    calc_fte() |>
+  ), by = .(physician_id, year)] |>
+    (\(dt) { dt[, fte_pct := round(total_hours / FTE_ANNUAL_HOURS, 4)]; dt })() |>
     calc_hourly_rate()
 }
 

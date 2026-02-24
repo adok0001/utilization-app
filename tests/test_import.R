@@ -5,9 +5,9 @@ library(testthat)
 library(data.table)
 library(withr)
 
-source("R/utils/constants.R")
-source("R/utils/logging.R")
-source("R/data/import.R")
+source("../R/utils/constants.R")
+source("../R/utils/logging.R")
+source("../R/data/import.R")
 
 # ── read_csv_upload ──────────────────────────────────────────
 test_that("read_csv_upload reads a valid CSV correctly", {
@@ -60,7 +60,7 @@ test_that("read_upload throws for unsupported extension", {
 })
 
 test_that("read_upload reads sample CSV correctly", {
-  result <- read_upload("sample_data/sample_upload_1.csv",
+  result <- read_upload("../sample_data/sample_upload_1.csv",
                          "sample_upload_1.csv")
   expect_s3_class(result, "data.table")
   expect_true(nrow(result) > 0)
